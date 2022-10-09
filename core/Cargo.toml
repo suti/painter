@@ -1,0 +1,14 @@
+[package]
+name = "painter_core"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bytemuck = "1.12.1"
+kurbo = "0.8.3"
+tiny-skia-path = "0.8.1"
+ttf-parser = "0.17.0"
+svg = "0.10.0"
+tiny-skia = "0.8.1"

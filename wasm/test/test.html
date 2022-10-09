@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div id="result" style="display: flex">
+    <div>
+        <div id="svg"></div>
+    </div>
+    <div>
+        <img id="img" src="" alt="" />
+    </div>
+</div>
+<script type="module">
+    import init, {Canvas, Path2D} from '/painter/wasm/pkg/painter_wasm.js';
+
+    await init()
+
+    const fontBuffer = await fetch('/painter/font/test/zc2016.woff').then(res => res.arrayBuffer());
+
+    const renderFns = () => {
+        let canvas = new Canvas(500, 500);
+        canvas.forceHightQuality();
+        canvas.loadFont(new Uint8Array(fontBuffer));
+        let ctx = canvas.getContext2d();
+        ctx.save();
+        ctx.translate(250, 250);
+        ctx.rotate(30);
+        ctx.translate(-250, -250);
+        ctx.fillStyle = "rgba(0, 128, 255, 0.3)";
+        ctx.fillRect(0, 0, 500, 500);
+        ctx.restore();
+        ctx.arc(250.0, 250.0, 200.0, 0.01, 360.0, false);
+        ctx.strokeStyle = "rgba(255, 0, 128, 0.5)";
+        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.lineWidth = 10;
+        ctx.stroke();
+        ctx.fill();
+
+        ctx.fontFamily = "HappyZcool-2016";
+        ctx.fontSize = 40.0;
+        ctx.strokeStyle = "rgba(255, 0, 128, 0.4)";
+        ctx.lineWidth = 2;
+        ctx.fillStyle = "rgba(0, 128, 255, 0.48)";
+        ctx.strokeText("hello world 你好世界 233", 80.0, 100.0, 250);
+        ctx.fillText("hello world 你好世界 233", 80.0, 100.0, 250);
+
+        let path = new Path2D();
+        path.beginPath();
+        path.arc(250.0, 250.0, 200.0, 0.01, 360.0, false);
+        path.closePath();
+        ctx.clip(path.toRust());
+
+        ctx.fillStyle = "rgba(0, 255, 125, 0.24)";
+        ctx.fillRect(0.0, 0.0, 500.0, 500.0);
+
+        ctx.beginPath();
+        ctx.moveTo(200.0, 120.0);
+        ctx.lineTo(300.0, 220.0);
+        ctx.lineTo(100.0, 220.0);
+        ctx.closePath();
+
+        ctx.rect(250.0, 250.0, 150.0, 150.0);
+
+        ctx.strokeStyle = "rgba(0, 255, 128, 0.5)";
+        ctx.lineWidth = 20.0;
+        ctx.lineJoin = "bevel";
+        ctx.lineCap = "round";
+        ctx.fillStyle = "#cc00ff88";
+
+        ctx.stroke();
+        ctx.fill();
+
+        ctx.lineWidth = 4.0;
+        ctx.strokeStyle = "rgba(255, 0, 128, 0.46)";
+        ctx.strokeRect(80.0, 280.0, 100.0, 100.0);
+        ctx.strokeStyle = "rgba(0, 128, 255, 0.46)";
+        ctx.strokeRect(120.0, 240.0, 100.0, 100.0);
+        ctx.resetTransform();
+        ctx.beginPath();
+        ctx.strokeStyle = "orange";
+        ctx.arc(250.0, 250.0, 120.0, 0.0, 270.0, false);
+        ctx.stroke();
+        canvas = ctx.canvas;
+
+        let now = performance.now();
+        canvas.bind("#svg");
+        canvas.render();
+        console.log("svg perf: ", performance.now() - now);
+        now = performance.now();
+        canvas.bind("#img");
+        canvas.render();
+        console.log("png perf: ", performance.now() - now);
+    }
+    renderFns()
+
+</script>
+</body>
+</html>

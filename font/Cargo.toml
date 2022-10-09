@@ -1,0 +1,12 @@
+[package]
+name = "painter_font"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+painter_core = { path = "../core" }
+fontdb = "0.9.1"
+miniz_oxide = "0.6.1"
+ttf-parser = "0.17.0"

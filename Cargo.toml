@@ -1,0 +1,12 @@
+[package]
+name = "painter"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+numbers = ["core", "font", "wasm"]
+
+[dependencies]
+painter_core = { path = "./core" }
+painter_font = { path = "./font" }
+painter_wasm = { path = "./wasm" }
