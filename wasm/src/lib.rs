@@ -5,16 +5,12 @@ mod path;
 extern crate painter_core;
 extern crate painter_font;
 
-extern crate wee_alloc;
 extern crate js_sys;
 extern crate web_sys;
 extern crate wasm_bindgen;
 extern crate base64;
 
 use crate::wasm_bindgen::prelude::wasm_bindgen;
-
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 
 #[wasm_bindgen]
