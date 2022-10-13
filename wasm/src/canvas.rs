@@ -60,7 +60,7 @@ pub struct Canvas {
 impl Canvas {
     #[wasm_bindgen(constructor)]
     pub fn new(width: u32, height: u32, backend: JsValue) -> Self {
-        let mut ctx = Context::new();
+        let mut ctx = Context::new_wh(width as f32, height as f32);
         let backend = backend.as_string().unwrap_or(String::from("pix"));
         let backend = match backend.as_str() {
             "pix" => Backend::Pix,

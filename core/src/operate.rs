@@ -1,11 +1,120 @@
-use std::error::Error;
 use std::ops::Deref;
+use svg::node::element::tag::Polygon;
 use tiny_skia_path::{f32x2, LineCap, LineJoin, StrokeDash};
+use crate::helps::polygon::Polygon;
 use crate::paint::blend::BlendMode;
 use crate::paint::{ClipMask, FillRule, Paint};
 use crate::paint::stroke::Stroke;
-use crate::path::PathData;
+use crate::path::{PathData, PathSegment};
 use crate::transform::Transform;
+
+#[derive(Clone, Debug)]
+pub struct ClearRect {
+    global_width: f32,
+    global_height: f32,
+    clear_list: Vec<PathData>,
+}
+
+impl ClearRect {
+    pub fn new(width: f32, height: f32) -> Self {
+        ClearRect {
+            global_width: width,
+            global_height: height,
+            clear_list: vec![],
+        }
+    }
+
+    pub fn set_global_width(&mut self, width: f32) {
+        self.global_width = width
+    }
+
+    pub fn set_global_height(&mut self, height: f32) {
+        self.global_height = height
+    }
+
+    pub fn append(&mut self, x: f32, y: f32, width: f32, height: f32, transform: &Transform) -> Option<()> {
+        let mut rect = PathData::create_rect(x, y, width, height)?;
+        rect.transform(transform.clone());
+        self.clear_list.push(rect);
+        Some(())
+    }
+
+    pub fn get_path(&self) -> PathData {
+        let mut path = PathData::new();
+        let mut container = PathData::create_rect_reverse(0., 0., self.global_width, self.global_height).unwrap();
+        path.append(&mut container);
+        let mut union_polygon = UnionPolygon::default();
+        self.clear_list.iter().map(|path| {
+            let mut p = Polygon::new();
+            for seg in path.iter() {
+                match seg {
+                    PathSegment::MoveTo { x, y } |
+                    PathSegment::LineTo { x, y } => {
+                        p.add_point(*x, *y)
+                    }
+                    _ => {}
+                }
+            }
+            p
+        }).for_each(|p| {
+            union_polygon.append(p);
+        });
+        path.append(union_polygon.into_path().as_mut());
+        path
+    }
+}
+
+#[test]
+fn test_polygon() {
+    let mut p0 = Polygon::new();
+    p0.add_point(0.,0.);
+    p0.add_point(10., 10.);
+
+}
+
+#[derive(Default)]
+struct UnionPolygon {
+    inner: Vec<Polygon>,
+}
+
+impl UnionPolygon {
+    fn append(&mut self, p: Polygon) {
+        let mut merged_polygon = vec![] as Vec<Polygon>;
+        let mut result_polygon = vec![] as Vec<Polygon>;
+        self.inner.iter().for_each(|p0| {
+            let mut result = p0.union(&p);
+            if result.len() == 1 {
+                merged_polygon.append(&mut result)
+            } else {
+                result_polygon.push(p0.clone())
+            }
+        });
+        if self.inner.len() == 0 || merged_polygon.len() == 0 {
+            result_polygon.push(p)
+        }
+        if merged_polygon.len() > 0 {
+            let single_polygon = merged_polygon.iter().fold(Polygon::default(), |p, c| {
+                if p.is_empty() {
+                    c.clone()
+                } else {
+                    let result = p.union(c);
+                    result.get(0).unwrap().clone()
+                }
+            });
+            result_polygon.push(single_polygon);
+        }
+        self.inner = result_polygon
+    }
+
+    fn into_path(self) -> PathData {
+        let mut path = PathData::new();
+        for p in self.inner.into_iter() {
+            path.append(p.into_path().as_mut());
+        }
+        path
+    }
+}
+
 
 #[derive(Clone, Debug)]
 pub struct VectorSegment {
@@ -14,6 +123,7 @@ pub struct VectorSegment {
     pub fill: Option<Paint>,
     pub stroke: Option<Stroke>,
     pub clip: Option<ClipMask>,
+    pub clear_rect: Option<ClearRect>,
 }
 
 impl Default for VectorSegment {
@@ -24,6 +134,7 @@ impl Default for VectorSegment {
             fill: None,
             stroke: None,
             clip: None,
+            clear_rect: None,
         }
     }
 }
@@ -36,6 +147,7 @@ pub struct PixelSegment {
     pub opacity: f32,
     pub transform: Transform,
     pub clip: Option<ClipMask>,
+    pub clear_rect: Option<ClearRect>,
 }
 
 impl PixelSegment {
@@ -47,6 +159,7 @@ impl PixelSegment {
             opacity: 1.0,
             transform: Transform::default(),
             clip: None,
+            clear_rect: None,
         }
     }
 }
@@ -87,6 +200,22 @@ impl Deref for OperateSegment {
 impl OperateSegment {
     pub fn detail(&self) -> String {
         format!("{:?}", self.inner)
+    }
+
+    pub fn append_clear_rect(&mut self, x: f32, y: f32, width: f32, height: f32, transform: &Transform, g_width: f32, g_height: f32) {
+        let mut append_path = |clear_rect: &Option<ClearRect>| -> Option<ClearRect> {
+            let mut clear_rect = clear_rect.clone().unwrap_or(ClearRect::new(g_width, g_height));
+            clear_rect.append(x, y, width, height, transform);
+            Some(clear_rect)
+        };
+        match &mut self.inner {
+            Segment::Vector(v) => {
+                v.clear_rect = append_path(&v.clear_rect)
+            }
+            Segment::Pixel(v) => {
+                v.clear_rect = append_path(&v.clear_rect)
+            }
+        };
     }
 
     pub fn width(&self) -> Option<f32> {
@@ -237,6 +366,11 @@ impl Default for Operates {
 impl Operates {
     pub fn len(&self) -> usize {
         self.queue.len()
+    }
+    pub fn append_clear_rect(&mut self, x: f32, y: f32, width: f32, height: f32, transform: &Transform, g_width: f32, g_height: f32) {
+        for item in self.queue.iter_mut() {
+            item.append_clear_rect(x, y, width, height, transform, g_width, g_height)
+        }
     }
     pub fn append(&mut self) -> OperateAppender {
         OperateAppender {

@@ -135,7 +135,7 @@ impl StyleBucket {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct StyleStore {
     inner: StyleBucket,
     back: StyleBucket,
@@ -162,15 +162,6 @@ impl Deref for StyleStore {
 impl DerefMut for StyleStore {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.inner
-    }
-}
-
-impl Default for StyleStore {
-    fn default() -> Self {
-        StyleStore {
-            inner: StyleBucket::default(),
-            back: StyleBucket::default(),
-        }
     }
 }
 

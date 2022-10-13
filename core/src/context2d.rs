@@ -14,6 +14,8 @@ use crate::style_bucket::{StyleBucket, StyleStore};
 
 #[derive(Default)]
 pub struct Context<'a> {
+    width: f32,
+    height: f32,
     style_bucket: StyleStore,
     path_cache: PathBuilder,
     operate_queue: Operates,
@@ -22,7 +24,19 @@ pub struct Context<'a> {
 
 impl<'a> Context<'a> {
     pub fn new() -> Self {
-        Context::default()
+        Context::new_wh(200.0, 200.0)
+    }
+
+    pub fn new_wh(width: f32, height: f32) -> Self {
+        let mut ctx = Context::default();
+        ctx.width = width;
+        ctx.height = height;
+        ctx
+    }
+
+    pub fn reset_wh(&mut self, width: f32, height: f32) {
+        self.width = width;
+        self.height = height;
     }
 
     pub fn set_font_family(&mut self, family: &str) {
@@ -81,8 +95,8 @@ impl<'a> Context<'a> {
     pub fn bezier_curve_to(&mut self, cp1x: f32, cp1y: f32, cp2x: f32, cp2y: f32, x: f32, y: f32) {
         self.path_cache.bezier_curve_to(cp1x, cp1y, cp2x, cp2y, x, y, &self.style_bucket.transform);
     }
-    pub fn clear_rect(&mut self) {
-        todo!()
+    pub fn clear_rect(&mut self, x: f32, y: f32, width: f32, height: f32) {
+        self.operate_queue.append_clear_rect(x, y, width, height, &self.style_bucket.transform, self.width, self.height);
     }
     pub fn clip(&mut self, path: Option<PathData>, fill_rule: Option<FillRule>) {
         let path = path.unwrap_or(self.path_cache.clone().into_path_data());
@@ -133,7 +147,6 @@ impl<'a> Context<'a> {
         }?;
         path.transform(transform);
         path.transform(Transform::new_translate(x, y));
-        println!("{:?}", &path);
         self.fill(Some(path.clone()), Some(fill_rule));
         Some((path))
     }

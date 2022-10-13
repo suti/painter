@@ -46,26 +46,51 @@ impl SkiaCPURender {
         self.pixmap.save_png(path).ok()
     }
 
-    pub fn fill_path(&mut self, path: &PathData, paint: &crate::paint::Paint, fill_rule: &crate::paint::FillRule, clip_mask: Option<crate::paint::ClipMask>) -> Option<()> {
+    pub fn fill_path(&mut self, path: &PathData, paint: &crate::paint::Paint, fill_rule: &crate::paint::FillRule, clip_mask: Option<crate::paint::ClipMask>, clear: Option<crate::operate::ClearRect>) -> Option<()> {
         let paint = SkiaCPURender::build_paint(paint, self.anti_alias, self.force_hq_pipeline);
         let path = SkiaCPURender::build_path(path)?;
         let fill_rule = SkiaCPURender::build_fill_rule(fill_rule);
         let mut clip = ClipMask::new();
         let result = {
-            SkiaCPURender::build_clip_mask(&mut clip, clip_mask, self.pixmap.width(), self.pixmap.height())
+            let has_clip = SkiaCPURender::build_clip_mask(&mut clip, clip_mask, self.pixmap.width(), self.pixmap.height()).is_some();
+            let mut has_clear = false;
+            if let Some(clear) = clear {
+                let clear_path = clear.get_path();
+                if let Some(path) = SkiaCPURender::build_path(&clear_path) {
+                    has_clear = true;
+                    if clip.is_empty() {
+                        clip.set_path(self.pixmap.width(), self.pixmap.height(), &path, FillRule::default(), self.anti_alias)
+                    } else {
+                        clip.intersect_path(&path, FillRule::default(), self.anti_alias)
+                    };
+                }
+            }
+            has_clear || has_clip
         };
-        let clip_mask = result.and_then(|_| Some(&clip));
+        let clip_mask = if result { Some(&clip) } else { None };
         self.pixmap.fill_path(&path, &paint, fill_rule, Default::default(), clip_mask)
     }
 
-    pub fn stroke_path(&mut self, path: &PathData, stroke: &crate::paint::stroke::Stroke, clip_mask: Option<crate::paint::ClipMask>) -> Option<()> {
+    pub fn stroke_path(&mut self, path: &PathData, stroke: &crate::paint::stroke::Stroke, clip_mask: Option<crate::paint::ClipMask>, clear: Option<crate::operate::ClearRect>) -> Option<()> {
         let (paint, stroke) = SkiaCPURender::build_stroke(stroke, self.anti_alias, self.force_hq_pipeline);
         let path = SkiaCPURender::build_path(path)?;
         let mut clip = ClipMask::new();
         let result = {
-            SkiaCPURender::build_clip_mask(&mut clip, clip_mask, self.pixmap.width(), self.pixmap.height())
+            let has_clip = SkiaCPURender::build_clip_mask(&mut clip, clip_mask, self.pixmap.width(), self.pixmap.height()).is_some();
+            let mut has_clear = false;
+            if let Some(clear) = clear {
+                if let Some(path) = SkiaCPURender::build_path(&clear.get_path()) {
+                    has_clear = true;
+                    if clip.is_empty() {
+                        clip.set_path(self.pixmap.width(), self.pixmap.height(), &path, FillRule::default(), self.anti_alias)
+                    } else {
+                        clip.intersect_path(&path, FillRule::default(), self.anti_alias)
+                    };
+                }
+            }
+            has_clear || has_clip
         };
-        let clip_mask = result.and_then(|_| Some(&clip));
+        let clip_mask = if result { Some(&clip) } else { None };
         self.pixmap.stroke_path(&path, &paint, &stroke, Default::default(), clip_mask)
     }
 
@@ -176,8 +201,8 @@ impl PainterBackend for SkiaCPURender {
                 self.draw_pixel(&seg.data, seg.size, seg.opacity, &seg.transform, seg.clip.clone())
             }
             Segment::Vector(ref seg) => {
-                seg.fill.as_ref().and_then(|paint| self.fill_path(&seg.path, &paint, &seg.fill_rule, seg.clip.clone()));
-                seg.stroke.as_ref().and_then(|stroke| self.stroke_path(&seg.path, &stroke, seg.clip.clone()))
+                seg.fill.as_ref().and_then(|paint| self.fill_path(&seg.path, &paint, &seg.fill_rule, seg.clip.clone(), seg.clear_rect.clone()));
+                seg.stroke.as_ref().and_then(|stroke| self.stroke_path(&seg.path, &stroke, seg.clip.clone(), seg.clear_rect.clone()))
             }
         };
     }

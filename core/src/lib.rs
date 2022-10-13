@@ -12,6 +12,8 @@ pub mod backend;
 pub mod style_bucket;
 pub mod operate;
 pub mod font;
+pub mod filter;
+mod helps;
 
 pub use tiny_skia_path::f32x2 as f32x2;
 pub use path::PathData;

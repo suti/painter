@@ -134,8 +134,8 @@ impl Context2d {
     }
 
     #[wasm_bindgen(js_name = clearRect)]
-    pub fn clear_rect(&mut self) {
-        todo!()
+    pub fn clear_rect(&mut self, x: f32, y: f32, width: f32, height: f32) {
+        self.inner.ctx.clear_rect(x, y, width, height)
     }
 
     pub fn clip(&mut self, path: Option<Box<[f32]>>, fill_rule: JsValue) {

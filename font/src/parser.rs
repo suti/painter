@@ -85,7 +85,7 @@ impl GlyphExt for Database {
         };
         let id = self.query(&q)?;
         self.with_face_data(id, |data, face_index| {
-            let font = ttf_parser::Face::from_slice(data, face_index).ok()?;
+            let font = ttf_parser::Face::parse(data, face_index).ok()?;
             let glyph_id = font.glyph_index(c)?;
             let pixels_per_em = font.units_per_em();
             let mut builder = PathBuilder { path: PathData::new() };

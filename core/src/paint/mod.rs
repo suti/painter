@@ -75,10 +75,17 @@ impl From<FillRule> for String {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct ClipMask {
     pub path: PathData,
     pub fill_rule: FillRule,
 }
 
+
+impl ClipMask {
+    pub fn append_path(&mut self, path: &mut PathData) {
+
+        self.path.append(path)
+    }
+}
 

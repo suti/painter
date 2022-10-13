@@ -12,7 +12,7 @@
 - beginPath ✅
 - bezierCurveTo ✅
 - canvas ✅
-- clearRect ❌
+- clearRect ✅
 - clip ✅
   - path(parameter) ✅
 - closePath ✅

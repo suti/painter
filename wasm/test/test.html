@@ -46,7 +46,7 @@
         ctx.fillStyle = "rgba(0, 128, 255, 0.48)";
         ctx.strokeText("hello world 你好世界 233", 80.0, 100.0, 250);
         ctx.fillText("hello world 你好世界 233", 80.0, 100.0, 250);
-
+        ctx.clearRect(90, 90, 60, 60)
         let path = new Path2D();
         path.beginPath();
         path.arc(250.0, 250.0, 200.0, 0.01, 360.0, false);
@@ -83,6 +83,15 @@
         ctx.strokeStyle = "orange";
         ctx.arc(250.0, 250.0, 120.0, 0.0, 270.0, false);
         ctx.stroke();
+
+        ctx.clearRect(130, 130, 60, 60);
+
+        ctx.clearRect(300, 100, 80, 80);
+        ctx.translate(340., 140.);
+        ctx.rotate(-30.);
+        ctx.translate(-340., -140.);
+        ctx.clearRect(300, 100, 80, 80);
+
         canvas = ctx.canvas;
 
         let now = performance.now();

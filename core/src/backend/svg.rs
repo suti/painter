@@ -221,7 +221,7 @@ impl SvgRender {
         self.svg.assign("viewBox", into_str![x, " ", y, " ", w, " ", h]);
     }
 
-    pub fn append_path(&mut self, path_data: &PathData, paint: Option<&Paint>, stroke: Option<&Stroke>, fill_rule: Option<FillRule>, clip: Option<crate::paint::ClipMask>) {
+    pub fn append_path(&mut self, path_data: &PathData, paint: Option<&Paint>, stroke: Option<&Stroke>, fill_rule: Option<FillRule>, clip: Option<crate::paint::ClipMask>, clear: Option<crate::operate::ClearRect>) {
         let mut path_tag = create_path_tag(&String::from(path_data));
         let fill_rule = fill_rule.unwrap_or(FillRule::Nonzero);
         path_tag.assign("fill-rule", String::from(fill_rule));
@@ -247,6 +247,15 @@ impl SvgRender {
             clip_path.assign("fill-rule", String::from(clip.fill_rule.clone()));
             let id = self.create_use_id();
             let clip_tag = create_clip_tag(vec![clip_path], id.clone());
+            path_tag.assign("clip-path", into_str!["url(#", id, ")"]);
+            self.defs.append(clip_tag);
+        }
+        if let Some(clear) = clear {
+            let mut clip_path = create_path_tag(&String::from(&clear.get_path()));
+            clip_path.assign("fill-rule", String::from(FillRule::default()));
+            let id = self.create_use_id();
+            let clip_tag = create_clip_tag(vec![clip_path], id.clone());
+            path_tag = group(vec![path_tag]);
             path_tag.assign("clip-path", into_str!["url(#", id, ")"]);
             self.defs.append(clip_tag);
         }
@@ -291,8 +300,8 @@ impl PainterBackend for SvgRender {
                 // self.append_image()
             }
             Segment::Vector(ref seg) => {
-                seg.fill.as_ref().and_then(|paint| Some(self.append_path(&seg.path, Some(paint), None, Some(seg.fill_rule), seg.clip.clone())));
-                seg.stroke.as_ref().and_then(|stroke| Some(self.append_path(&seg.path, None, Some(stroke), Some(seg.fill_rule), seg.clip.clone())))
+                seg.fill.as_ref().and_then(|paint| Some(self.append_path(&seg.path, Some(paint), None, Some(seg.fill_rule), seg.clip.clone(), seg.clear_rect.clone())));
+                seg.stroke.as_ref().and_then(|stroke| Some(self.append_path(&seg.path, None, Some(stroke), Some(seg.fill_rule), seg.clip.clone(), seg.clear_rect.clone())))
             }
         };
     }

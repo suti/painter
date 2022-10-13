@@ -97,6 +97,7 @@ pub struct PremultipliedColorU8(u32);
 
 // Perfectly safe, since u32 is already Pod.
 unsafe impl bytemuck::Zeroable for PremultipliedColorU8 {}
+
 unsafe impl bytemuck::Pod for PremultipliedColorU8 {}
 
 impl PremultipliedColorU8 {
@@ -200,15 +201,21 @@ pub struct Color {
 }
 
 const NV_ZERO: NormalizedF32 = NormalizedF32::ZERO;
-const NV_ONE: NormalizedF32  = NormalizedF32::ONE;
+const NV_ONE: NormalizedF32 = NormalizedF32::ONE;
+
+impl Default for Color {
+    fn default() -> Self {
+        Color::from_rgba8(0, 0, 0, 255)
+    }
+}
 
 impl Color {
     /// A transparent color.
-    pub const TRANSPARENT: Color    = Color { r: NV_ZERO, g: NV_ZERO, b: NV_ZERO, a: NV_ZERO };
+    pub const TRANSPARENT: Color = Color { r: NV_ZERO, g: NV_ZERO, b: NV_ZERO, a: NV_ZERO };
     /// A black color.
-    pub const BLACK: Color          = Color { r: NV_ZERO, g: NV_ZERO, b: NV_ZERO, a: NV_ONE };
+    pub const BLACK: Color = Color { r: NV_ZERO, g: NV_ZERO, b: NV_ZERO, a: NV_ONE };
     /// A white color.
-    pub const WHITE: Color          = Color { r: NV_ONE, g: NV_ONE, b: NV_ONE, a: NV_ONE };
+    pub const WHITE: Color = Color { r: NV_ONE, g: NV_ONE, b: NV_ONE, a: NV_ONE };
 
     /// Creates a new color from 4 components.
     ///

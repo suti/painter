@@ -23,7 +23,7 @@ mod test {
     use crate::painter_core::transform::Transform;
 
     fn draw(font_bucket: &mut FontDB) -> Context2d {
-        let mut ctx = Context2d::new();
+        let mut ctx = Context2d::new_wh(2000.0, 2000.0);
         ctx.set_font_bucket(font_bucket);
         ctx.set_font_family("HappyZcool-2016");
         ctx.set_font_size(160.0);
@@ -69,6 +69,15 @@ mod test {
         ctx.set_stroke_style(Paint::from_color_rgba8(255, 128, 0, 255));
         ctx.arc(1000.0, 1000.0, 500.0, 0.0, 270.0, false);
         ctx.stroke(None);
+
+        ctx.clear_rect(400., 300., 600., 600.);
+        ctx.clear_rect(800., 800., 400., 400.);
+        ctx.clear_rect(1100., 1100., 400., 400.);
+        ctx.clear_rect(1400., 700., 200., 200.);
+        ctx.translate(1500., 800.);
+        ctx.rotate(-30.);
+        ctx.translate(-1500., -800.);
+        ctx.clear_rect(1400., 700., 200., 200.);
 
         ctx
     }
